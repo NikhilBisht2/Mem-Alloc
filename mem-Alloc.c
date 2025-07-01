@@ -28,7 +28,7 @@ int is_safe_allocation(size_t size) {
 }
 
 // check for free blocks
-void *check_for_free(size_t size) {
+block_t *check_for_free(size_t size) {
     block_t *curr = head;
     while (curr) {
         if(curr->is_free && curr->size >= size) {
@@ -45,16 +45,39 @@ void *mem_alloc(size_t size) {
         return NULL;
     }
 
+    size_t align_size = (size + 15) & ~15;
+
     pthread_mutex_lock(&global_malloc_lock);
 
     // check for free block
-    if(check_for_free(size)) {
-        block_t *block = check_for_free(size);
+    block_t *free_block = check_for_free(align_size);
+    if(free_block) {
+        free_block->is_free = 0;
+        pthread_mutex_unlock(&global_malloc_lock);
+        return (void*)(free_block + 1);
     }
 
+    // get new block from OS
+    block_t *new_block = sbrk(sizeof(block_t) + align_size);
+    if (new_block == (void*)-1) {
+        pthread_mutex_unlock(&global_malloc_lock);
+        return NULL;
+    }
 
+    if(head == NULL) {
+        head = new_block;
+        tail = new_block;
+    }else {
+        tail->next = new_block;
+        tail = tail->next;
+    }
 
+    new_block->is_free = 0;
+    new_block->size = align_size;
+    new_block->next = NULL;
 
+    pthread_mutex_unlock(&global_malloc_lock);
+    return (void*)(new_block + 1);
 }
 
 // free
