@@ -127,7 +127,7 @@ void *re_alloc(void *ptr, size_t size) {
   }
 
   block_t *old_block = (block_t *)ptr - 1;
-  
+
   // reuse the old block
   if (old_block->size >= size) {
     return ptr;
@@ -162,15 +162,16 @@ void *cal_alloc(size_t num, size_t size) {
 }
 
 int main() {
-    void *a = mem_alloc(100);
-    void *b = cal_alloc(10, 10);
-    void *c = re_alloc(a, 200);
-    mem_free(b);
-    mem_free(c);
 
-    void *d = mem_alloc(100); 
-    mem_free(d);
+  // testing
+  void *a = mem_alloc(100);
+  void *b = cal_alloc(10, 10);
+  void *c = re_alloc(a, 200);
+  mem_free(b);
+  mem_free(c);
 
-    return 0;
+  void *d = mem_alloc(100);
+  mem_free(d);
+
+  return 0;
 }
-
